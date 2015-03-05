@@ -26,6 +26,9 @@ pub struct Object {
   /// The set of vertices this object is composed of. These are referenced
   /// by index in `faces`.
   pub vertices: Vec<Vertex>,
+  /// The set of attached joints for each vertex. Should match
+  /// length of 'vertices' if present
+  pub joint_weights: Vec<JointWeights>,
   /// The set of texture vertices referenced by this object. The actual
   /// vertices are indexed by the second element in a `VTNIndex`.
   pub tex_vertices: Vec<TVertex>,
@@ -71,6 +74,17 @@ pub struct Vertex {
   pub z: f64,
 }
 
+/// Represents the weights of any joints that should
+/// control the vertex with skinned animation
+#[derive(Clone, Copy, Debug)]
+pub struct JointWeights {
+  /// Indices of joints attached to this vertex.
+  /// Maximum of 4 joints
+  pub joints: [usize; 4],
+  /// Weights for each joint attached to this vertex.
+  /// Maximum of 4 joints
+  pub weights: [f32; 4],
+}
 /// A single 3-dimensional normal
 pub type Normal = Vertex;
 
@@ -110,6 +124,13 @@ impl PartialOrd for Vertex {
 impl PartialEq for TVertex {
   fn eq(&self, other: &TVertex) -> bool {
     self.partial_cmp(other).unwrap() == Equal
+  }
+}
+
+// TODO(stjahns) what is this for?
+impl PartialEq for JointWeights {
+  fn eq(&self, _: &JointWeights) -> bool {
+    false
   }
 }
 
@@ -652,6 +673,7 @@ impl<'a> Parser<'a> {
       name:          name,
       vertices:     vertices,
       tex_vertices: tex_vertices,
+      joint_weights: Vec::new(), // No skinning data in obj files
       normals:      normals,
       geometry:      geometry,
     })
